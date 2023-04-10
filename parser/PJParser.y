@@ -413,6 +413,9 @@ Factor          : Variable
 			$$ = emitNotExpression(instList,$2);
 		}
 		| T_IDENTIFIER T_LPAREN T_RPAREN
+		{
+			$$ = 0;
+		}
 		| T_LPAREN Expr T_RPAREN
 		{
 			$$ = $2;
