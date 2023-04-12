@@ -41,7 +41,10 @@ EXTERN(int, emitCompute2DArrayAddress, (DList instList, int varIndex, int subInd
 EXTERN(int, emitLoadVariable,(DList instList, int varIndex));
 EXTERN(int, emitLoadIntegerConstant,(DList instList, char* intConst));
 
+EXTERN(void, emitStackOffest, (DList instList, int bytes));
+
 EXTERN(void, addIdToSymtab, (DNode node, Generic gtypeid));
+
 
 EXTERN(void,yyerror,(char*));
 

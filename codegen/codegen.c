@@ -40,9 +40,6 @@ static void printDataDeclaration(DNode decl) {
  */
 void emitProcedurePrologue(DList instList, char* name) {
 	char* inst = nssave(2,"\t.globl ",name);
-	// dlinkAppend(instList,dlinkNodeAlloc(inst));
-	// inst = nssave(3,"\t.type ",name,",@function");
-	// dlinkAppend(instList,dlinkNodeAlloc(inst));
 	inst = nssave(2,name,":\tnop");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
@@ -51,7 +48,6 @@ void emitProcedurePrologue(DList instList, char* name) {
 	inst = ssave("\tmovq %rsp, %rbp");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
-  inst = ssave("\tpushq %rbx");
   dlinkAppend(instList,dlinkNodeAlloc(inst));
 }
 
@@ -723,18 +719,13 @@ void addIdToSymtab(DNode node, Generic gtypeid) {
  * @param instList a DList of instructions
  */
 void emitProcedureExit(DList instList, int regIndex) {
-  char* inst = nssave(4,"\tmovslq ", getIntegerRegisterName(regIndex), ", ", "%rax");
-  dlinkAppend(instList,dlinkNodeAlloc(inst));
+	char* inst = nssave(4,"\tmovslq ", getIntegerRegisterName(regIndex), ", ", "%rax");
+	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
-  // somewhere here we gotta pushq all the registers
+	freeIntegerRegister(regIndex);
 
-  freeIntegerRegister(regIndex);
-
-  inst = ssave("\tpopq %rbx");
-  dlinkAppend(instList,dlinkNodeAlloc(inst));
-
-  inst = ssave("\tpopq %rbp");
-  dlinkAppend(instList,dlinkNodeAlloc(inst));
+	inst = ssave("\tpopq %rbp");
+	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
 	inst = ssave("\tret");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
@@ -900,4 +891,15 @@ void emitWhileLoopBackBranch(DList instList, int beginLabelIndex, int endLabelIn
 	inst = nssave(2,(char*)SymGetFieldByIndex(globalSymtab,endLabelIndex,SYM_NAME_FIELD),":\t nop");
 
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
+}
+
+
+void emitStackOffest(DList instList, int bytes) {
+	char *inst;
+	if (bytes > 0) {
+		inst = ssave("\taddq $8, %rsp");
+	} else {
+		inst = ssave("\tsubq $8, %rsp");
+	}
+	dlinkAppend(instList, dlinkNodeAlloc(inst));
 }

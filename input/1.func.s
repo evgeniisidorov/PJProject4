@@ -14,15 +14,14 @@ t:	nop
 	leaq .string_const1(%rip), %rsi
 	call printf@PLT
 	movl $10, %ebx
-	movlsx %ebx, %rax
+	movslq %ebx, %rax
 	popq %rbx
-	movq %rbp, %rsp  
 	popq %rbp
 	ret
 main:	nop
 	pushq %rbp
 	movq %rsp, %rbp
-	pushq %rbx
+	subq $8, %rsp
 	leaq _gp(%rip), %rbx
 	addq $0, %rbx
 	call t
@@ -35,5 +34,6 @@ main:	nop
 	movl %ecx, %esi
 	movl $0, %eax
 	call printf@PLT
+	addq $8, %rsp
 	leave
 	ret

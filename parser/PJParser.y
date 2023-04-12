@@ -123,6 +123,7 @@ extern FILE *yyin;
 
 Program : ProgramHeadAndProcedures CompoundStatement T_DOT
 		{
+			emitStackOffest(instList, 8);
 			emitGlobalExitPoint(instList);
 			emitDataPrologue(dataList);
 			emitInstructions(instList);
@@ -132,6 +133,7 @@ Program : ProgramHeadAndProcedures CompoundStatement T_DOT
 ProgramHeadAndProcedures : ProgramHead Procedures 
 		{
 			emitProcedurePrologue(instList,$1); // emit Program Prologue ? must include .global .type main,@function etc
+			emitStackOffest(instList, -8);
 		}
 ;
 
