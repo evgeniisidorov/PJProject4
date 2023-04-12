@@ -38,16 +38,19 @@ EXTERN(int, emitComputeVariableAddress,(DList instList, int varIndex));
 EXTERN(int, emitComputeArrayAddress, (DList instList, int varIndex, int subIndex));
 EXTERN(int, emitCompute2DArrayAddress, (DList instList, int varIndex, int subIndex1, int subIndex2));
 
+EXTERN(int, emitComputeStackVariableAddress, (DList instList, int stackVarIndex));
+
 EXTERN(int, emitLoadVariable,(DList instList, int varIndex));
 EXTERN(int, emitLoadIntegerConstant,(DList instList, char* intConst));
 
-EXTERN(void, emitStackOffest, (DList instList, int bytes));
+EXTERN(void, emitStackOffset, (DList instList, int bytes));
 EXTERN(void, emitPushCalleeSavedRegisters, (DList instList));
 EXTERN(void, emitPopCalleeSavedRegisters, (DList instList));
 EXTERN(void, emitPushCallerSavedRegisters, (DList instList));
 EXTERN(void, emitPopCallerSavedRegisters, (DList instList));
 
 EXTERN(void, addIdToSymtab, (DNode node, Generic gtypeid));
+EXTERN(void, addIdToLocalSymtab, (DNode node, Generic gtypeid));
 
 
 EXTERN(void,yyerror,(char*));

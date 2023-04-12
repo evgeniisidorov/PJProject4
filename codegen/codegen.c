@@ -10,7 +10,9 @@
 #include "symfields.h"
 
 extern SymTable globalSymtab;
+extern SymTable localSymtab;
 extern int globalOffset;
+extern int localOffset;
 extern int dataSize;
 
 static void printDataDeclaration(DNode decl);
@@ -47,7 +49,7 @@ void emitProcedurePrologue(DList instList, char* name) {
 	inst = ssave("\tmovq %rsp, %rbp");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
-	emitStackOffest(instList, -8);
+	emitStackOffset(instList, -8);
 }
 
 /**
@@ -480,6 +482,22 @@ int emitComputeVariableAddress(DList instList, int varIndex) {
   return addrRegIndex;
 }
 
+
+int emitComputeStackVariableAddress(DList instList, int stackVarIndex) {
+
+  int addrRegIndex = allocateIntegerRegister();
+  char* addrRegName = (char*)get64bitIntegerRegisterName(addrRegIndex);
+
+  int offset = -1 * (int)SymGetFieldByIndex(globalSymtab, stackVarIndex, SYMTAB_OFFSET_FIELD);
+  char offsetStr[10];
+  snprintf(offsetStr,9,"%d",offset);
+
+  char *inst;
+  inst = nssave(4, "\tleaq ", offsetStr, "(%rbp), ", addrRegName);
+  dlinkAppend(instList,dlinkNodeAlloc(inst));
+  return addrRegIndex;
+}
+
 /**
  * Compute the address of an array element and store it in a register.
  *
@@ -712,6 +730,16 @@ void addIdToSymtab(DNode node, Generic gtypeid) {
 	globalOffset += typeSize;
 }
 
+
+void addIdToLocalSymtab(DNode node, Generic gtypeid) {
+  int symIndex = (int)dlinkNodeAtom(node);
+  int offset;
+  int typeid = (int)gtypeid;
+  int typeSize = getTypeSize(typeid) * 2; // make it align to 8
+  localOffset -= typeSize;
+  SymPutFieldByIndex(globalSymtab, symIndex, SYMTAB_OFFSET_FIELD, (Generic)(localOffset));
+  SymPutFieldByIndex(globalSymtab, symIndex, SYMTAB_TYPE_INDEX_FIELD, (Generic)typeid);
+}
 /**
  * Print out the procedure exit instructios
  *
@@ -722,10 +750,10 @@ void emitProcedureExit(DList instList, int regIndex) {
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
 	freeIntegerRegister(regIndex);
-
+  emitStackOffset(instList, -localOffset);
 	emitPopCalleeSavedRegisters(instList);
 
-	emitStackOffest(instList, 8);
+	emitStackOffset(instList, 8);
 
 	inst = ssave("\tpopq %rbp");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
@@ -739,7 +767,7 @@ void emitProcedureExit(DList instList, int regIndex) {
  * @param instList a DList of instructions
  */
 void emitGlobalExitPoint(DList instList) {
-  emitStackOffest(instList, 8);
+  emitStackOffset(instList, 8);
   char *inst = ssave("\tleave");
   dlinkAppend(instList,dlinkNodeAlloc(inst));
   inst = ssave("\tret");
@@ -908,12 +936,15 @@ void emitWhileLoopBackBranch(DList instList, int beginLabelIndex, int endLabelIn
  * @param instList a list of instructions
  * @param bytes a number of bytes
 */
-void emitStackOffest(DList instList, int bytes) {
+void emitStackOffset(DList instList, int bytes) {
+  char *num;
 	char *inst;
 	if (bytes > 0) {
-		inst = ssave("\taddq $8, %rsp");
+    num = itoa(bytes, 10);
+		inst = nssave(3, "\taddq $", num, ", %rsp");
 	} else {
-		inst = ssave("\tsubq $8, %rsp");
+    num = itoa(abs(bytes), 10);
+    inst = nssave(3, "\tsubq $", num, ", %rsp");
 	}
 	dlinkAppend(instList, dlinkNodeAlloc(inst));
 }
@@ -927,11 +958,19 @@ void emitPushCalleeSavedRegisters(DList instList)
 		inst = nssave(2, "\tpushq ", get64bitIntegerRegisterName(calleeSavedRegisters[i]));
 		dlinkAppend(instList, dlinkNodeAlloc(inst));
 	}
+
+  inst = ssave("\tpushq %rbp");
+  dlinkAppend(instList, dlinkNodeAlloc(inst));  
+  inst = ssave("\tmovq %rsp, %rbp");
+  dlinkAppend(instList, dlinkNodeAlloc(inst));  
 }
 
 void emitPopCalleeSavedRegisters(DList instList)
 {
 	char *inst;
+
+  inst = ssave("\tpopq %rbp");
+  dlinkAppend(instList, dlinkNodeAlloc(inst));  
 
 	for (int i = NUM_CALLEE_SAVED - 1; i >= 0; i--)
 	{

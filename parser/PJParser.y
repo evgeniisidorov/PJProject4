@@ -28,12 +28,15 @@ EXTERN(void,yyerror,(char*));
 EXTERN(int,yylex,(void));
 
 SymTable globalSymtab;
+SymTable localSymtab;
+bool isLocalScope = false;
 
 static DList instList;
 static DList dataList;
 char *fileName;
 
 int globalOffset = 0;
+int localOffset = 0;
 extern int yylineno;
 extern char *yytext;
 extern FILE *yyin;
@@ -131,6 +134,7 @@ Program : ProgramHeadAndProcedures CompoundStatement T_DOT
 
 ProgramHeadAndProcedures : ProgramHead Procedures 
 		{
+			isLocalScope = false;
 			emitProcedurePrologue(instList,$1); // emit Program Prologue ? must include .global .type main,@function etc
 		}
 ;
@@ -144,33 +148,58 @@ ProgramHead : T_PROGRAM T_IDENTIFIER T_SEMICOLON Decls
 
        
 Decls : T_VAR DeclList
+{
+}
 		|
 	  	;
 	  
 DeclList : IdentifierList T_COLON Type T_SEMICOLON
 		{   
-			dlinkApply1($1,(DLinkApply1Func)addIdToSymtab, (Generic)$3);
-			dlinkFreeNodes($1);
+			if (isLocalScope) {
+				dlinkApply1($1, (DLinkApply1Func)addIdToLocalSymtab, (Generic)$3);
+				dlinkFreeNodes($1);
+			} else {
+				dlinkApply1($1,(DLinkApply1Func)addIdToSymtab, (Generic)$3);
+				dlinkFreeNodes($1);
+			}
 		}
 		 | DeclList IdentifierList T_COLON Type T_SEMICOLON
 		{
-			dlinkApply1($2,(DLinkApply1Func)addIdToSymtab, (Generic)$4);
-			dlinkFreeNodes($2);
+			if (isLocalScope) {
+				dlinkApply1($2,(DLinkApply1Func)addIdToLocalSymtab, (Generic)$4);
+				dlinkFreeNodes($2);
+			} else {
+				dlinkApply1($2,(DLinkApply1Func)addIdToSymtab, (Generic)$4);
+				dlinkFreeNodes($2);
+			}
 		}
 		 ;
 		 
 IdentifierList : T_IDENTIFIER
 		{
-			int symTabIndex = SymIndex(globalSymtab,$1);
-				
-			$$ = dlinkListAlloc(NULL);
-			dlinkAppend($$,dlinkNodeAlloc((Generic)symTabIndex));
+			if (isLocalScope) {
+				int localSymtabIndex = SymIndex(localSymtab, $1);
+
+				$$ = dlinkListAlloc(NULL);
+				dlinkAppend($$,dlinkNodeAlloc((Generic)localSymtabIndex));
+			} else {
+				int symTabIndex = SymIndex(globalSymtab,$1);
+					
+				$$ = dlinkListAlloc(NULL);
+				dlinkAppend($$,dlinkNodeAlloc((Generic)symTabIndex));
+			}
 		}
 	       | IdentifierList T_COMMA T_IDENTIFIER
 		{
-			int symTabIndex = SymIndex(globalSymtab,$3);
-			dlinkAppend($1,dlinkNodeAlloc((Generic)symTabIndex));
-			$$ = $1;
+			if (isLocalScope) {
+					int localSymtabIndex = SymIndex(localSymtab, $3);
+					dlinkAppend($$,dlinkNodeAlloc((Generic)localSymtabIndex));
+					$$ = $1;
+				} else {
+					int symTabIndex = SymIndex(globalSymtab,$3);
+					dlinkAppend($1,dlinkNodeAlloc((Generic)symTabIndex));
+					$$ = $1;
+				}
 		}
 		;
 	
@@ -235,13 +264,19 @@ ProcedureDecl : ProcedureHead ProcedureBody
 
 ProcedureHead : FunctionDecl Decls 
 		{
-    	emitProcedurePrologue(instList, $1);
-		emitPushCalleeSavedRegisters(instList);
+			emitStackOffset(instList, localOffset);
 		}
 					;
 
 FunctionDecl : T_FUNCTION T_IDENTIFIER T_COLON StandardType T_SEMICOLON
 		{
+			isLocalScope = true;	
+    	emitProcedurePrologue(instList, $2);
+			emitPushCalleeSavedRegisters(instList);	
+			if (isLocalScope) {
+					localSymtab = SymInit(SYMTABLE_SIZE);
+					SymInitField(localSymtab,SYMTAB_OFFSET_FIELD,(Generic)-1,NULL);
+			}
 			$$ = $2;
 		}
    	     ;
@@ -319,7 +354,7 @@ IOStatement : T_READ T_LPAREN Variable T_RPAREN
             ;
 
 OutputFormat : T_COLON T_INTNUM
-        	{
+  	{
 		   $$ = $2;
 		} |
 		{
@@ -336,6 +371,12 @@ WriteToken : T_WRITE
 ExitStatement : T_EXIT T_LPAREN Expr T_RPAREN 
 {
 	emitProcedureExit(instList, $3);
+
+	isLocalScope = false;
+
+	SymKillField(localSymtab,SYMTAB_OFFSET_FIELD);
+	SymKill(localSymtab);
+
 }
 		;
 
@@ -437,8 +478,13 @@ Factor          : Variable
  
 Variable        : T_IDENTIFIER
 		{
-			int symIndex = SymQueryIndex(globalSymtab,$1);
-			$$ = emitComputeVariableAddress(instList, symIndex);
+			if (isLocalScope && SymQueryIndex(localSymtab, $1) != SYM_INVALID_INDEX) {
+				int symIndex = SymQueryIndex(localSymtab, $1);
+				$$ = emitComputeStackVariableAddress(instList, symIndex);
+			} else {
+				int symIndex = SymQueryIndex(globalSymtab,$1);
+				$$ = emitComputeVariableAddress(instList, symIndex);
+			}
 		}
                 | T_IDENTIFIER T_LBRACKET Expr T_RBRACKET    
                	{
@@ -506,6 +552,7 @@ static void initialize(char* inputFileName) {
 	
 	globalSymtab = SymInit(SYMTABLE_SIZE);
 	SymInitField(globalSymtab,SYMTAB_OFFSET_FIELD,(Generic)-1,NULL);
+
 	initRegisters();
 	
 	instList = dlinkListAlloc(NULL);

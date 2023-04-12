@@ -23,6 +23,7 @@
 
 #define STREQ(x,y) ((*(x) == *(y)) && !strcmp((x), (y)))
 
+EXTERN(char*, itoa, (int val, int base));
 EXTERN(char*, ssave, (const char *const str));
 EXTERN(void, sfree, (char* str));
 EXTERN(void, smove, (char** old_str, char* new_str));
