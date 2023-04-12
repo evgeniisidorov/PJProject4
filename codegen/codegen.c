@@ -39,14 +39,15 @@ static void printDataDeclaration(DNode decl) {
  * @param name procedure/function name
  */
 void emitProcedurePrologue(DList instList, char* name) {
-	char* inst = nssave(2,"\t.globl ",name);
-	inst = nssave(2,name,":\tnop");
+	char* inst = nssave(2,name,":\tnop");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
 	inst = ssave("\tpushq %rbp");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 	inst = ssave("\tmovq %rsp, %rbp");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+	emitStackOffest(instList, -8);
 }
 
 /**
@@ -724,6 +725,8 @@ void emitProcedureExit(DList instList, int regIndex) {
 
 	emitPopCalleeSavedRegisters(instList);
 
+	emitStackOffest(instList, 8);
+
 	inst = ssave("\tpopq %rbp");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
@@ -736,6 +739,7 @@ void emitProcedureExit(DList instList, int regIndex) {
  * @param instList a DList of instructions
  */
 void emitGlobalExitPoint(DList instList) {
+  emitStackOffest(instList, 8);
   char *inst = ssave("\tleave");
   dlinkAppend(instList,dlinkNodeAlloc(inst));
   inst = ssave("\tret");
@@ -748,8 +752,12 @@ void emitGlobalExitPoint(DList instList) {
  * @param name a procedure name
  */
 int emitProcedureCall(DList instList, char* name) {
+  emitPushCallerSavedRegisters(instList);
+
   char *inst = nssave(2, "\tcall ", name);
   dlinkAppend(instList, dlinkNodeAlloc(inst));
+
+  emitPopCallerSavedRegisters(instList);
 
   int treg = allocateIntegerRegister();
   char *symReg = getIntegerRegisterName(treg);
@@ -929,5 +937,33 @@ void emitPopCalleeSavedRegisters(DList instList)
 	{
 		inst = nssave(2, "\tpopq ", get64bitIntegerRegisterName(calleeSavedRegisters[i]));
 		dlinkAppend(instList, dlinkNodeAlloc(inst));
+	}
+}
+
+void emitPushCallerSavedRegisters(DList instList)
+{
+	char *inst;
+
+	for (int i = 0; i < NUM_CALLER_SAVED; i++)
+	{
+		// if (isAllocatedIntegerRegister(calleeSavedRegisters[i]))
+		// {
+			inst = nssave(2, "\tpushq ", get64bitIntegerRegisterName(callerSavedRegisters[i]));
+			dlinkAppend(instList, dlinkNodeAlloc(inst));
+		// }
+	}
+}
+
+void emitPopCallerSavedRegisters(DList instList)
+{
+	char *inst;
+
+	for (int i = NUM_CALLER_SAVED - 1; i >= 0; i--)
+	{
+		// if (isAllocatedIntegerRegister(calleeSavedRegisters[i]))
+		// {
+			inst = nssave(2, "\tpopq ", get64bitIntegerRegisterName(callerSavedRegisters[i]));
+			dlinkAppend(instList, dlinkNodeAlloc(inst));
+		// }
 	}
 }

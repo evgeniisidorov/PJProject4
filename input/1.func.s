@@ -9,6 +9,7 @@
 t:	nop
 	pushq %rbp
 	movq %rsp, %rbp
+	subq $8, %rsp
 	pushq %rbx
 	pushq %r12
 	pushq %r13
@@ -24,6 +25,7 @@ t:	nop
 	popq %r13
 	popq %r12
 	popq %rbx
+	addq $8, %rsp
 	popq %rbp
 	ret
 main:	nop
@@ -32,7 +34,17 @@ main:	nop
 	subq $8, %rsp
 	leaq _gp(%rip), %rbx
 	addq $0, %rbx
+	pushq %rcx
+	pushq %r8
+	pushq %r9
+	pushq %r10
+	pushq %r11
 	call t
+	popq %r11
+	popq %r10
+	popq %r9
+	popq %r8
+	popq %rcx
 	movl %eax, %ecx
 	movl %ecx, (%rbx)
 	leaq _gp(%rip), %rbx

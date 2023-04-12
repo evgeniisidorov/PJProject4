@@ -44,6 +44,8 @@ EXTERN(int, emitLoadIntegerConstant,(DList instList, char* intConst));
 EXTERN(void, emitStackOffest, (DList instList, int bytes));
 EXTERN(void, emitPushCalleeSavedRegisters, (DList instList));
 EXTERN(void, emitPopCalleeSavedRegisters, (DList instList));
+EXTERN(void, emitPushCallerSavedRegisters, (DList instList));
+EXTERN(void, emitPopCallerSavedRegisters, (DList instList));
 
 EXTERN(void, addIdToSymtab, (DNode node, Generic gtypeid));
 
