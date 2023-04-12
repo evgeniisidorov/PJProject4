@@ -112,7 +112,7 @@ extern FILE *yyin;
 
 %type <idList> IdentifierList
 %type <regIndex> Expr AddExpr MulExpr Factor Variable Constant
-%type <name> T_STRING T_INTNUM  ProgramHead T_IDENTIFIER OutputFormat
+%type <name> T_STRING T_INTNUM  ProgramHead T_IDENTIFIER OutputFormat FunctionDecl
 %type <typeId> Type StandardType ArrayType WriteToken
 %type <bounds> Dim
 %type <value> IntConst
@@ -123,7 +123,7 @@ extern FILE *yyin;
 
 Program : ProgramHeadAndProcedures CompoundStatement T_DOT
 		{
-			emitProcedureExit(instList);
+			emitGlobalExitPoint(instList);
 			emitDataPrologue(dataList);
 			emitInstructions(instList);
 		}
@@ -131,12 +131,13 @@ Program : ProgramHeadAndProcedures CompoundStatement T_DOT
 
 ProgramHeadAndProcedures : ProgramHead Procedures 
 		{
-			emitProcedurePrologue(instList,$1);
+			emitProcedurePrologue(instList,$1); // emit Program Prologue ? must include .global .type main,@function etc
 		}
 ;
 
 ProgramHead : T_PROGRAM T_IDENTIFIER T_SEMICOLON Decls 
 		{
+			emitGlobalEntryPoint(instList);
 			$$ = "main";
 		}
 	    ;
@@ -171,6 +172,7 @@ IdentifierList : T_IDENTIFIER
 			dlinkAppend($1,dlinkNodeAlloc((Generic)symTabIndex));
 			$$ = $1;
 		}
+		;
 	
 Type : StandardType
 		{
@@ -225,16 +227,22 @@ IntConst : T_MINUS T_INTNUM
            ;
 
 Procedures : Procedures ProcedureDecl
-	   | 
+	   | ProcedureDecl 
 	   ;
 
-ProcedureDecl : ProcedureHead ProcedureBody
+ProcedureDecl : ProcedureHead ProcedureBody 
        ;
 
 ProcedureHead : FunctionDecl Decls 
-    	;
+		{
+    	emitProcedurePrologue(instList, $1);
+		}
+					;
 
 FunctionDecl : T_FUNCTION T_IDENTIFIER T_COLON StandardType T_SEMICOLON
+		{
+			$$ = $2;
+		}
    	     ;
 	      
 ProcedureBody : CompoundStatement T_SEMICOLON
@@ -325,6 +333,9 @@ WriteToken : T_WRITE
 		;
 			 
 ExitStatement : T_EXIT T_LPAREN Expr T_RPAREN 
+{
+	emitProcedureExit(instList, $3);
+}
 		;
 
 CompoundStatement : T_BEGIN StatementList T_END
@@ -414,7 +425,7 @@ Factor          : Variable
 		}
 		| T_IDENTIFIER T_LPAREN T_RPAREN
 		{
-			$$ = 0;
+			$$ = emitProcedureCall(instList, $1);
 		}
 		| T_LPAREN Expr T_RPAREN
 		{

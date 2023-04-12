@@ -20,6 +20,8 @@ static int emitBinaryExpression(DList instList, int leftOperand, int rightOperan
 static int emitBinaryCompareExpression(DList instList, int leftOperand, int rightOperand,
 				       char *opcode);
 static void makeLabel(char label[20]);
+static void emitCalleeSavedRegisters(DList instList);
+static void emitCallerSavedRegisters(DList instList);
 
 /**
  * Print a data declaration to stdout. This function is called by dlinkApply only.
@@ -38,9 +40,9 @@ static void printDataDeclaration(DNode decl) {
  */
 void emitProcedurePrologue(DList instList, char* name) {
 	char* inst = nssave(2,"\t.globl ",name);
-	dlinkAppend(instList,dlinkNodeAlloc(inst));
-	inst = nssave(3,"\t.type ",name,",@function");
-	dlinkAppend(instList,dlinkNodeAlloc(inst));
+	// dlinkAppend(instList,dlinkNodeAlloc(inst));
+	// inst = nssave(3,"\t.type ",name,",@function");
+	// dlinkAppend(instList,dlinkNodeAlloc(inst));
 	inst = nssave(2,name,":\tnop");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
@@ -48,6 +50,20 @@ void emitProcedurePrologue(DList instList, char* name) {
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 	inst = ssave("\tmovq %rsp, %rbp");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+  inst = ssave("\tpushq %rbx");
+  dlinkAppend(instList,dlinkNodeAlloc(inst));
+}
+
+/**
+ * Emit the assembly prologue for the global entry point "main"
+ * @param instList a list of instructions
+ */
+void emitGlobalEntryPoint(DList instList) {
+  char* inst = nssave(2,"\t.globl ","main");
+  dlinkAppend(instList,dlinkNodeAlloc(inst));
+  inst = nssave(3,"\t.type ","main",",@function");
+  dlinkAppend(instList,dlinkNodeAlloc(inst));
 }
 
 
@@ -706,11 +722,51 @@ void addIdToSymtab(DNode node, Generic gtypeid) {
  *
  * @param instList a DList of instructions
  */
-void emitProcedureExit(DList instList) {
-	char *inst = ssave("\tleave");
-	dlinkAppend(instList,dlinkNodeAlloc(inst));
+void emitProcedureExit(DList instList, int regIndex) {
+  char* inst = nssave(4,"\tmovslq ", getIntegerRegisterName(regIndex), ", ", "%rax");
+  dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+  // somewhere here we gotta pushq all the registers
+
+  freeIntegerRegister(regIndex);
+
+  inst = ssave("\tpopq %rbx");
+  dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+  inst = ssave("\tpopq %rbp");
+  dlinkAppend(instList,dlinkNodeAlloc(inst));
+
 	inst = ssave("\tret");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
+}
+
+/**
+ * Print out the global exit point, i.e. "main"
+ * @param instList a DList of instructions
+ */
+void emitGlobalExitPoint(DList instList) {
+  char *inst = ssave("\tleave");
+  dlinkAppend(instList,dlinkNodeAlloc(inst));
+  inst = ssave("\tret");
+  dlinkAppend(instList,dlinkNodeAlloc(inst));
+}
+
+/**
+ * Print out the procedure call. Also clears and reloads registers before function call 
+ * @param instList a DList of instructions
+ * @param name a procedure name
+ */
+int emitProcedureCall(DList instList, char* name) {
+  char *inst = nssave(2, "\tcall ", name);
+  dlinkAppend(instList, dlinkNodeAlloc(inst));
+
+  int treg = allocateIntegerRegister();
+  char *symReg = getIntegerRegisterName(treg);
+
+  inst = nssave(2, "\tmovl %eax, ", symReg);
+  dlinkAppend(instList, dlinkNodeAlloc(inst));
+
+  return treg;
 }
 
 /**

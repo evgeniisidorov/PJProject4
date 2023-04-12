@@ -16,13 +16,13 @@ t:	nop
 	movl $10, %ebx
 	movlsx %ebx, %rax
 	popq %rbx
-	movq %rbp, %rsp
+	movq %rbp, %rsp  
 	popq %rbp
 	ret
 main:	nop
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $8, %rsp 
+	pushq %rbx
 	leaq _gp(%rip), %rbx
 	addq $0, %rbx
 	call t
