@@ -750,7 +750,10 @@ void emitProcedureExit(DList instList, int regIndex) {
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
 	freeIntegerRegister(regIndex);
-  emitStackOffset(instList, -localOffset);
+  if (localOffset != 0) {
+      emitStackOffset(instList, -localOffset);
+  }
+
 	emitPopCalleeSavedRegisters(instList);
 
 	emitStackOffset(instList, 8);

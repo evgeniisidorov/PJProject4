@@ -264,7 +264,9 @@ ProcedureDecl : ProcedureHead ProcedureBody
 
 ProcedureHead : FunctionDecl Decls 
 		{
-			emitStackOffset(instList, localOffset);
+			if (localOffset != 0) {
+				emitStackOffset(instList, localOffset);
+			}
 		}
 					;
 
