@@ -10,11 +10,19 @@ t:	nop
 	pushq %rbp
 	movq %rsp, %rbp
 	pushq %rbx
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
 	leaq .string_const0(%rip), %rdi
 	leaq .string_const1(%rip), %rsi
 	call printf@PLT
 	movl $10, %ebx
 	movslq %ebx, %rax
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
 	popq %rbx
 	popq %rbp
 	ret

@@ -238,6 +238,7 @@ ProcedureDecl : ProcedureHead ProcedureBody
 ProcedureHead : FunctionDecl Decls 
 		{
     	emitProcedurePrologue(instList, $1);
+		emitPushCalleeSavedRegisters(instList);
 		}
 					;
 

@@ -29,5 +29,11 @@ EXTERN(char*, getIntegerRegisterName, (int reg));
 EXTERN(void, reserveIntegerRegister, (int reg));
 EXTERN(char*, get64bitIntegerRegisterName, (int reg));
 EXTERN(bool, isAllocatedIntegerRegister, (int reg));
+EXTERN(int, getCalleeSavedRegisterName, (int orderNum));
+EXTERN(int, getCallerSavedRegisterName, (int orderNum));
+
+extern int calleeSavedRegisters[NUM_CALLEE_SAVED];
+extern int callerSavedRegisters[NUM_CALLER_SAVED];
+
 
 #endif /*REG_H_*/

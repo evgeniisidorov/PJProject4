@@ -47,8 +47,6 @@ void emitProcedurePrologue(DList instList, char* name) {
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 	inst = ssave("\tmovq %rsp, %rbp");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
-
-  dlinkAppend(instList,dlinkNodeAlloc(inst));
 }
 
 /**
@@ -724,6 +722,8 @@ void emitProcedureExit(DList instList, int regIndex) {
 
 	freeIntegerRegister(regIndex);
 
+	emitPopCalleeSavedRegisters(instList);
+
 	inst = ssave("\tpopq %rbp");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
@@ -894,6 +894,12 @@ void emitWhileLoopBackBranch(DList instList, int beginLabelIndex, int endLabelIn
 }
 
 
+/**
+ * Emits stack pointer offest. If @param bytes is > 0, adds 8 bytes, otherwise substract 8 bytes
+ * @todo  make bytes num custom
+ * @param instList a list of instructions
+ * @param bytes a number of bytes
+*/
 void emitStackOffest(DList instList, int bytes) {
 	char *inst;
 	if (bytes > 0) {
@@ -902,4 +908,26 @@ void emitStackOffest(DList instList, int bytes) {
 		inst = ssave("\tsubq $8, %rsp");
 	}
 	dlinkAppend(instList, dlinkNodeAlloc(inst));
+}
+
+void emitPushCalleeSavedRegisters(DList instList)
+{
+	char *inst;
+
+	for (int i = 0; i < NUM_CALLEE_SAVED; i++)
+	{
+		inst = nssave(2, "\tpushq ", get64bitIntegerRegisterName(calleeSavedRegisters[i]));
+		dlinkAppend(instList, dlinkNodeAlloc(inst));
+	}
+}
+
+void emitPopCalleeSavedRegisters(DList instList)
+{
+	char *inst;
+
+	for (int i = NUM_CALLEE_SAVED - 1; i >= 0; i--)
+	{
+		inst = nssave(2, "\tpopq ", get64bitIntegerRegisterName(calleeSavedRegisters[i]));
+		dlinkAppend(instList, dlinkNodeAlloc(inst));
+	}
 }
