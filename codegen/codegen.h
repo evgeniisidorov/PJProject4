@@ -6,6 +6,7 @@ EXTERN(void, emitGlobalEntryPoint, (DList instList));
 EXTERN(void, emitProcedureExit, (DList instList, int regIndex));
 EXTERN(void, emitGlobalExitPoint, (DList instList));
 EXTERN(int, emitProcedureCall, (DList instList, char* name));
+EXTERN(void, emitProcedureEpilogue, (DList instList));
 EXTERN(void, emitDataPrologue, (DList dataList));
 EXTERN(void, emitInstructions,(DList list));
 EXTERN(void, emitAssignment, (DList instList, int lhsRegIndex, int rhsRegIndex));
@@ -39,6 +40,7 @@ EXTERN(int, emitComputeArrayAddress, (DList instList, int varIndex, int subIndex
 EXTERN(int, emitCompute2DArrayAddress, (DList instList, int varIndex, int subIndex1, int subIndex2));
 
 EXTERN(int, emitComputeStackVariableAddress, (DList instList, int stackVarIndex));
+EXTERN(int, emitComputeStackArrayAddress, (DList instList, int varIndex, int subIndex));
 
 EXTERN(int, emitLoadVariable,(DList instList, int varIndex));
 EXTERN(int, emitLoadIntegerConstant,(DList instList, char* intConst));

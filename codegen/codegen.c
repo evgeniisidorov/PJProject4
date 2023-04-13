@@ -487,9 +487,11 @@ int emitComputeStackVariableAddress(DList instList, int stackVarIndex) {
   int addrRegIndex = allocateIntegerRegister();
   char* addrRegName = (char*)get64bitIntegerRegisterName(addrRegIndex);
 
-  int offset = -1 * (int)SymGetFieldByIndex(localSymtab, stackVarIndex, SYMTAB_OFFSET_FIELD);
+  int offset = (int)SymGetFieldByIndex(localSymtab, stackVarIndex, SYMTAB_OFFSET_FIELD);
+  int stackOffset = - (localOffset - offset);
+
   char offsetStr[10];
-  snprintf(offsetStr,9,"%d",offset);
+  snprintf(offsetStr,9,"%d",stackOffset);
 
   char *inst;
   inst = nssave(4, "\tleaq ", offsetStr, "(%rbp), ", addrRegName);
@@ -640,6 +642,52 @@ int emitComputeArrayAddress(DList instList, int varIndex, int subIndex) {
 
 }
 
+int emitComputeStackArrayAddress(DList instList, int varIndex, int subIndex) {
+	int regIndex = allocateIntegerRegister();
+	int varTypeIndex = (int)SymGetFieldByIndex(localSymtab,varIndex,SYMTAB_TYPE_INDEX_FIELD); 
+
+	if (isArrayType(varTypeIndex)) {
+		char* regName = get64bitIntegerRegisterName(regIndex);
+		int firstElementOffset = (int)SymGetFieldByIndex(globalSymtab,varIndex,SYMTAB_OFFSET_FIELD);
+		firstElementOffset = -(localOffset - firstElementOffset);
+		char offsetStr[10];
+		snprintf(offsetStr,9,"%d",firstElementOffset);
+
+		// put the first element into register 
+		char * inst = nssave(4, "leaq ", offsetStr, "(%rbp), ", regName);
+		dlinkAppend(instList, dlinkNodeAlloc(inst));
+
+		/* compute offset based on subscript */
+	    char* subReg32Name = getIntegerRegisterName(subIndex);
+		char* subRegName = get64bitIntegerRegisterName(subIndex);
+		
+		inst = nssave(4,"\tmovslq ", subReg32Name, ", ", subRegName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));	
+
+		snprintf(offsetStr,9,"%d",get1stDimensionbase(varTypeIndex));
+		inst = nssave(4,"\tsubq $", offsetStr, ", ", subRegName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+		inst = nssave(2, "\tmulq $8, ", subRegName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+		// subreg now is ready for computing final offset
+
+		inst = nssave(4,"\taddq ", subRegName, ", ", regName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+	} else {
+		char msg[80];
+
+		snprintf(msg,80,"Scalar variable %s used as an array",
+				(char*)SymGetFieldByIndex(localSymtab,varIndex,SYM_NAME_FIELD));
+		yyerror(msg);
+	}
+
+	freeIntegerRegister(subIndex);
+
+	return regIndex;
+}
+
 /**
  * Add an instruction to load a variable from memory.
  *
@@ -732,7 +780,7 @@ void addIdToSymtab(DNode node, Generic gtypeid) {
 
 void addIdToLocalSymtab(DNode node, Generic gtypeid) {
   int symIndex = (int)dlinkNodeAtom(node);
-  int offset;
+
   int typeid = (int)gtypeid;
   int typeSize = getTypeSize(typeid) * 2; // make it align to 8
   localOffset -= typeSize;
