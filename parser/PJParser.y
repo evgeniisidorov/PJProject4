@@ -261,6 +261,14 @@ Procedures : Procedures ProcedureDecl
 	   ;
 
 ProcedureDecl : ProcedureHead ProcedureBody 
+{
+	isLocalScope = false;
+
+	SymKillField(localSymtab,SYMTAB_OFFSET_FIELD);
+	SymKill(localSymtab);
+
+	emitProcedureEpilogue(instList);
+}
        ;
 
 ProcedureHead : FunctionDecl Decls 
@@ -371,12 +379,6 @@ WriteToken : T_WRITE
 ExitStatement : T_EXIT T_LPAREN Expr T_RPAREN 
 {
 	emitProcedureExit(instList, $3);
-
-	isLocalScope = false;
-
-	SymKillField(localSymtab,SYMTAB_OFFSET_FIELD);
-	SymKill(localSymtab);
-
 }
 		;
 

@@ -749,8 +749,12 @@ void emitProcedureExit(DList instList, int regIndex) {
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
 	freeIntegerRegister(regIndex);
+}
 
-	if (localOffset != 0) {
+void emitProcedureEpilogue(DList instList) {
+	char* inst;
+
+		if (localOffset != 0) {
 		emitStackOffset(instList, -localOffset);
 	}
 
