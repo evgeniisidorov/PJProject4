@@ -193,7 +193,6 @@ a4:	nop
 main:	nop
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $8, %rsp
 	leaq _gp(%rip), %rbx
 	addq $0, %rbx
 	pushq %rcx
@@ -254,6 +253,5 @@ main:	nop
 	popq %rcx
 	movl %eax, %ecx
 	movl %ecx, (%rbx)
-	addq $8, %rsp
 	leave
 	ret

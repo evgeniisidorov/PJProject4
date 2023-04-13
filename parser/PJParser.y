@@ -257,6 +257,7 @@ IntConst : T_MINUS T_INTNUM
 
 Procedures : Procedures ProcedureDecl
 	   | ProcedureDecl 
+	   |
 	   ;
 
 ProcedureDecl : ProcedureHead ProcedureBody 
@@ -265,9 +266,6 @@ ProcedureDecl : ProcedureHead ProcedureBody
 ProcedureHead : FunctionDecl Decls 
 		{
 			emitPushCalleeSavedRegisters(instList);	
-			if (localOffset != 0) {
-				emitStackOffset(instList, localOffset);
-			}
 		}
 					;
 

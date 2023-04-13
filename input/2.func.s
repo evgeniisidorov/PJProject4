@@ -9,7 +9,6 @@
 t:	nop
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $8, %rsp
 	pushq %rbx
 	pushq %r12
 	pushq %r13
@@ -36,13 +35,11 @@ t:	nop
 	popq %r13
 	popq %r12
 	popq %rbx
-	addq $8, %rsp
 	popq %rbp
 	ret
 main:	nop
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $8, %rsp
 	leaq _gp(%rip), %rbx
 	addq $0, %rbx
 	pushq %rcx
@@ -65,6 +62,5 @@ main:	nop
 	movl %ecx, %esi
 	movl $0, %eax
 	call printf@PLT
-	addq $8, %rsp
 	leave
 	ret

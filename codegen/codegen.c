@@ -14,6 +14,7 @@ extern SymTable localSymtab;
 extern int globalOffset;
 extern int localOffset;
 extern int dataSize;
+extern bool isLocalScope;
 
 static void printDataDeclaration(DNode decl);
 static void printInstruction(DNode inst);
@@ -48,8 +49,6 @@ void emitProcedurePrologue(DList instList, char* name) {
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 	inst = ssave("\tmovq %rsp, %rbp");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
-
-	emitStackOffset(instList, -8);
 }
 
 /**
@@ -750,13 +749,12 @@ void emitProcedureExit(DList instList, int regIndex) {
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
 	freeIntegerRegister(regIndex);
-  if (localOffset != 0) {
-      emitStackOffset(instList, -localOffset);
-  }
+
+	if (localOffset != 0) {
+		emitStackOffset(instList, -localOffset);
+	}
 
 	emitPopCalleeSavedRegisters(instList);
-
-	emitStackOffset(instList, 8);
 
 	inst = ssave("\tpopq %rbp");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
@@ -770,7 +768,6 @@ void emitProcedureExit(DList instList, int regIndex) {
  * @param instList a DList of instructions
  */
 void emitGlobalExitPoint(DList instList) {
-  emitStackOffset(instList, 8);
   char *inst = ssave("\tleave");
   dlinkAppend(instList,dlinkNodeAlloc(inst));
   inst = ssave("\tret");
@@ -967,6 +964,7 @@ void emitPushCalleeSavedRegisters(DList instList)
 		dlinkAppend(instList, dlinkNodeAlloc(inst));  
 		inst = ssave("\tmovq %rsp, %rbp");
 		dlinkAppend(instList, dlinkNodeAlloc(inst));  
+		emitStackOffset(instList, localOffset);
 	}
 }
 
