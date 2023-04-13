@@ -264,6 +264,7 @@ ProcedureDecl : ProcedureHead ProcedureBody
 
 ProcedureHead : FunctionDecl Decls 
 		{
+			emitPushCalleeSavedRegisters(instList);	
 			if (localOffset != 0) {
 				emitStackOffset(instList, localOffset);
 			}
@@ -274,7 +275,6 @@ FunctionDecl : T_FUNCTION T_IDENTIFIER T_COLON StandardType T_SEMICOLON
 		{
 			isLocalScope = true;	
 			emitProcedurePrologue(instList, $2);
-			emitPushCalleeSavedRegisters(instList);	
 			if (isLocalScope) {
 					localSymtab = SymInit(SYMTABLE_SIZE);
 					SymInitField(localSymtab,SYMTAB_OFFSET_FIELD,(Generic)-1,NULL);

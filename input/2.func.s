@@ -44,7 +44,7 @@ main:	nop
 	movq %rsp, %rbp
 	subq $8, %rsp
 	leaq _gp(%rip), %rbx
-	addq $-8, %rbx
+	addq $0, %rbx
 	pushq %rcx
 	pushq %r8
 	pushq %r9
@@ -59,7 +59,7 @@ main:	nop
 	movl %eax, %ecx
 	movl %ecx, (%rbx)
 	leaq _gp(%rip), %rbx
-	addq $-8, %rbx
+	addq $0, %rbx
 	movl (%rbx), %ecx
 	leaq .string_const2(%rip), %rdi
 	movl %ecx, %esi

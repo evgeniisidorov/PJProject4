@@ -488,7 +488,7 @@ int emitComputeStackVariableAddress(DList instList, int stackVarIndex) {
   int addrRegIndex = allocateIntegerRegister();
   char* addrRegName = (char*)get64bitIntegerRegisterName(addrRegIndex);
 
-  int offset = -1 * (int)SymGetFieldByIndex(globalSymtab, stackVarIndex, SYMTAB_OFFSET_FIELD);
+  int offset = -1 * (int)SymGetFieldByIndex(localSymtab, stackVarIndex, SYMTAB_OFFSET_FIELD);
   char offsetStr[10];
   snprintf(offsetStr,9,"%d",offset);
 
@@ -962,18 +962,21 @@ void emitPushCalleeSavedRegisters(DList instList)
 		dlinkAppend(instList, dlinkNodeAlloc(inst));
 	}
 
-  inst = ssave("\tpushq %rbp");
-  dlinkAppend(instList, dlinkNodeAlloc(inst));  
-  inst = ssave("\tmovq %rsp, %rbp");
-  dlinkAppend(instList, dlinkNodeAlloc(inst));  
+	if (localOffset != 0) {
+		inst = ssave("\tpushq %rbp");
+		dlinkAppend(instList, dlinkNodeAlloc(inst));  
+		inst = ssave("\tmovq %rsp, %rbp");
+		dlinkAppend(instList, dlinkNodeAlloc(inst));  
+	}
 }
 
 void emitPopCalleeSavedRegisters(DList instList)
 {
 	char *inst;
-
-  inst = ssave("\tpopq %rbp");
-  dlinkAppend(instList, dlinkNodeAlloc(inst));  
+	if (localOffset != 0) {
+		inst = ssave("\tpopq %rbp");
+		dlinkAppend(instList, dlinkNodeAlloc(inst));  
+	}
 
 	for (int i = NUM_CALLEE_SAVED - 1; i >= 0; i--)
 	{

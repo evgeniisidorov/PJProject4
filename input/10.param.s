@@ -13,8 +13,6 @@ b4:	nop
 	pushq %r13
 	pushq %r14
 	pushq %r15
-	pushq %rbp
-	movq %rsp, %rbp
 	movl $4, %ebx
 	leaq .string_const0(%rip), %rdi
 	movl %ebx, %esi
@@ -35,7 +33,6 @@ b4:	nop
 	movl $1, %ebx
 	addl %ebx, %ecx
 	movslq %ecx, %rax
-	popq %rbp
 	popq %r15
 	popq %r14
 	popq %r13
@@ -70,7 +67,7 @@ d2:	nop
 	movl %ecx, %esi
 	movl $0, %eax
 	call printf@PLT
-	leaq 0(%rbp), %rbx
+	leaq 8(%rbp), %rbx
 	leaq _gp(%rip), %rcx
 	addq $0, %rcx
 	movl (%rcx), %r8d
@@ -83,7 +80,7 @@ d2:	nop
 	movl %r8d, (%rbx)
 	leaq _gp(%rip), %rbx
 	addq $4, %rbx
-	leaq 0(%rbp), %rcx
+	leaq 8(%rbp), %rcx
 	movl (%rcx), %r8d
 	movl %r8d, (%rbx)
 	movl $1, %ebx
@@ -166,7 +163,7 @@ d1:	nop
 	pushq %rbp
 	movq %rsp, %rbp
 	subq $16, %rsp
-	leaq 0(%rbp), %rbx
+	leaq 16(%rbp), %rbx
 	leaq _gp(%rip), %rcx
 	addq $0, %rcx
 	movl (%rcx), %r8d
@@ -180,7 +177,7 @@ d1:	nop
 	movl %ecx, %esi
 	movl $0, %eax
 	call printf@PLT
-	leaq 0(%rbp), %rbx
+	leaq 16(%rbp), %rbx
 	movl (%rbx), %ecx
 	leaq .string_const0(%rip), %rdi
 	movl %ecx, %esi
@@ -223,7 +220,7 @@ d1:	nop
 	movl %ecx, %esi
 	movl $0, %eax
 	call printf@PLT
-	leaq 0(%rbp), %rbx
+	leaq 16(%rbp), %rbx
 	movl (%rbx), %ecx
 	leaq .string_const0(%rip), %rdi
 	movl %ecx, %esi
@@ -266,7 +263,7 @@ d1:	nop
 	movl %ecx, %esi
 	movl $0, %eax
 	call printf@PLT
-	leaq 0(%rbp), %rbx
+	leaq 16(%rbp), %rbx
 	movl (%rbx), %ecx
 	leaq .string_const0(%rip), %rdi
 	movl %ecx, %esi
@@ -286,7 +283,7 @@ d1:	nop
 	movl %ecx, %esi
 	movl $0, %eax
 	call printf@PLT
-	leaq 0(%rbp), %rbx
+	leaq 16(%rbp), %rbx
 	movl (%rbx), %ecx
 	movslq %ecx, %rax
 	addq $16, %rsp
