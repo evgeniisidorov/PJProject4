@@ -488,7 +488,7 @@ int emitComputeStackVariableAddress(DList instList, int stackVarIndex) {
   char* addrRegName = (char*)get64bitIntegerRegisterName(addrRegIndex);
 
   int offset = (int)SymGetFieldByIndex(localSymtab, stackVarIndex, SYMTAB_OFFSET_FIELD);
-  int stackOffset = - (localOffset - offset);
+  int stackOffset = offset;
 
   char offsetStr[10];
   snprintf(offsetStr,9,"%d",stackOffset);
@@ -648,31 +648,29 @@ int emitComputeStackArrayAddress(DList instList, int varIndex, int subIndex) {
 
 	if (isArrayType(varTypeIndex)) {
 		char* regName = get64bitIntegerRegisterName(regIndex);
-		int firstElementOffset = (int)SymGetFieldByIndex(globalSymtab,varIndex,SYMTAB_OFFSET_FIELD);
-		firstElementOffset = -(localOffset - firstElementOffset);
+		int offset = (int)SymGetFieldByIndex(localSymtab,varIndex,SYMTAB_OFFSET_FIELD);
 		char offsetStr[10];
-		snprintf(offsetStr,9,"%d",firstElementOffset);
-
-		// put the first element into register 
-		char * inst = nssave(4, "leaq ", offsetStr, "(%rbp), ", regName);
-		dlinkAppend(instList, dlinkNodeAlloc(inst));
+		snprintf(offsetStr,9,"%d",offset);
+	
+		char *inst = nssave(4,"\tleaq ", offsetStr, "(%rbp), ", regName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
 
 		/* compute offset based on subscript */
 	    char* subReg32Name = getIntegerRegisterName(subIndex);
 		char* subRegName = get64bitIntegerRegisterName(subIndex);
 		
 		inst = nssave(4,"\tmovslq ", subReg32Name, ", ", subRegName);
-		dlinkAppend(instList,dlinkNodeAlloc(inst));	
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
 
+		// to do: use element size below
 		snprintf(offsetStr,9,"%d",get1stDimensionbase(varTypeIndex));
 		inst = nssave(4,"\tsubq $", offsetStr, ", ", subRegName);
 		dlinkAppend(instList,dlinkNodeAlloc(inst));
 
-		inst = nssave(2, "\tmulq $8, ", subRegName);
+		inst = nssave(2,"\timulq $8, ", subRegName);
 		dlinkAppend(instList,dlinkNodeAlloc(inst));
 
-		// subreg now is ready for computing final offset
-
+		/* compute element address */
 		inst = nssave(4,"\taddq ", subRegName, ", ", regName);
 		dlinkAppend(instList,dlinkNodeAlloc(inst));
 	} else {
