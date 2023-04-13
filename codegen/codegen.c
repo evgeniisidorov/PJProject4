@@ -737,8 +737,8 @@ void addIdToLocalSymtab(DNode node, Generic gtypeid) {
   int typeid = (int)gtypeid;
   int typeSize = getTypeSize(typeid) * 2; // make it align to 8
   localOffset -= typeSize;
-  SymPutFieldByIndex(globalSymtab, symIndex, SYMTAB_OFFSET_FIELD, (Generic)(localOffset));
-  SymPutFieldByIndex(globalSymtab, symIndex, SYMTAB_TYPE_INDEX_FIELD, (Generic)typeid);
+  SymPutFieldByIndex(localSymtab, symIndex, SYMTAB_OFFSET_FIELD, (Generic)(localOffset));
+  SymPutFieldByIndex(localSymtab, symIndex, SYMTAB_TYPE_INDEX_FIELD, (Generic)typeid);
 }
 /**
  * Print out the procedure exit instructios

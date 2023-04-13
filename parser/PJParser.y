@@ -273,7 +273,7 @@ ProcedureHead : FunctionDecl Decls
 FunctionDecl : T_FUNCTION T_IDENTIFIER T_COLON StandardType T_SEMICOLON
 		{
 			isLocalScope = true;	
-    	emitProcedurePrologue(instList, $2);
+			emitProcedurePrologue(instList, $2);
 			emitPushCalleeSavedRegisters(instList);	
 			if (isLocalScope) {
 					localSymtab = SymInit(SYMTABLE_SIZE);
