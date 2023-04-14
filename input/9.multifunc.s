@@ -6,7 +6,6 @@
 b1:	nop
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $8, %rsp
 	pushq %rbx
 	pushq %r12
 	pushq %r13
@@ -24,13 +23,11 @@ b1:	nop
 	popq %r13
 	popq %r12
 	popq %rbx
-	addq $8, %rsp
 	popq %rbp
 	ret
 b2:	nop
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $8, %rsp
 	pushq %rbx
 	pushq %r12
 	pushq %r13
@@ -59,13 +56,11 @@ b2:	nop
 	popq %r13
 	popq %r12
 	popq %rbx
-	addq $8, %rsp
 	popq %rbp
 	ret
 b3:	nop
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $8, %rsp
 	pushq %rbx
 	pushq %r12
 	pushq %r13
@@ -107,13 +102,11 @@ b3:	nop
 	popq %r13
 	popq %r12
 	popq %rbx
-	addq $8, %rsp
 	popq %rbp
 	ret
 b4:	nop
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $8, %rsp
 	pushq %rbx
 	pushq %r12
 	pushq %r13
@@ -168,13 +161,11 @@ b4:	nop
 	popq %r13
 	popq %r12
 	popq %rbx
-	addq $8, %rsp
 	popq %rbp
 	ret
 main:	nop
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $8, %rsp
 	pushq %rcx
 	pushq %r8
 	pushq %r9
@@ -230,6 +221,5 @@ main:	nop
 	movl %ebx, %esi
 	movl $0, %eax
 	call printf@PLT
-	addq $8, %rsp
 	leave
 	ret

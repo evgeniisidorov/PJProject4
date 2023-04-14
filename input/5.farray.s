@@ -1,8 +1,6 @@
 	.section	.rodata
-	.comm _gp, 4, 4
-	.string_const0: .string "%s\n"
-	.string_const1: .string "inside function"
-	.string_const2: .string "%d\n"
+	.comm _gp, 8, 4
+	.string_const0: .string "%d\n"
 	.text
 	.globl main
 	.type main,@function
@@ -16,19 +14,36 @@ t:	nop
 	pushq %r15
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $8, %rsp
-	leaq .string_const0(%rip), %rdi
-	leaq .string_const1(%rip), %rsi
-	call printf@PLT
-	leaq 0(%rbp), %rbx
-	movl $10, %ecx
-	movl %ecx, (%rbx)
-	leaq 0(%rbp), %rbx
-	movl (%rbx), %ecx
+	subq $88, %rsp
+	movl $3, %ebx
+	leaq -88(%rbp), %rcx
+	movslq %ebx, %rbx
+	subq $0, %rbx
+	imulq $8, %rbx
+	addq %rbx, %rcx
 	movl $5, %ebx
+	movl %ebx, (%rcx)
+	leaq -8(%rbp), %rbx
+	movl $2, %ecx
+	movl %ecx, (%rbx)
+	leaq -8(%rbp), %rbx
+	movl (%rbx), %ecx
+	leaq .string_const0(%rip), %rdi
+	movl %ecx, %esi
+	movl $0, %eax
+	call printf@PLT
+	leaq -8(%rbp), %rbx
+	movl (%rbx), %ecx
+	movl $3, %ebx
+	leaq -88(%rbp), %r8
+	movslq %ebx, %rbx
+	subq $0, %rbx
+	imulq $8, %rbx
+	addq %rbx, %r8
+	movl (%r8), %ebx
 	addl %ebx, %ecx
 	movslq %ecx, %rax
-	addq $8, %rsp
+	addq $88, %rsp
 	popq %rbp
 	popq %r15
 	popq %r14
@@ -42,6 +57,10 @@ main:	nop
 	movq %rsp, %rbp
 	leaq _gp(%rip), %rbx
 	addq $0, %rbx
+	movl $1, %ecx
+	movl %ecx, (%rbx)
+	leaq _gp(%rip), %rbx
+	addq $4, %rbx
 	pushq %rcx
 	pushq %r8
 	pushq %r9
@@ -58,7 +77,11 @@ main:	nop
 	leaq _gp(%rip), %rbx
 	addq $0, %rbx
 	movl (%rbx), %ecx
-	leaq .string_const2(%rip), %rdi
+	leaq _gp(%rip), %rbx
+	addq $4, %rbx
+	movl (%rbx), %r8d
+	addl %r8d, %ecx
+	leaq .string_const0(%rip), %rdi
 	movl %ecx, %esi
 	movl $0, %eax
 	call printf@PLT

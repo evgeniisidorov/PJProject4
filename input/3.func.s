@@ -15,16 +15,16 @@ t:	nop
 	pushq %rbp
 	movq %rsp, %rbp
 	subq $8, %rsp
-	leaq 8(%rbp), %rbx
+	leaq 0(%rbp), %rbx
 	movl $2, %ecx
 	movl %ecx, (%rbx)
-	leaq 8(%rbp), %rbx
+	leaq 0(%rbp), %rbx
 	movl (%rbx), %ecx
 	leaq .string_const0(%rip), %rdi
 	movl %ecx, %esi
 	movl $0, %eax
 	call printf@PLT
-	leaq 8(%rbp), %rbx
+	leaq 0(%rbp), %rbx
 	movl (%rbx), %ecx
 	movl $1, %ebx
 	addl %ebx, %ecx
