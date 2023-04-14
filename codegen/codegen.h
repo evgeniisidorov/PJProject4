@@ -41,6 +41,7 @@ EXTERN(int, emitCompute2DArrayAddress, (DList instList, int varIndex, int subInd
 
 EXTERN(int, emitComputeStackVariableAddress, (DList instList, int stackVarIndex));
 EXTERN(int, emitComputeStackArrayAddress, (DList instList, int varIndex, int subIndex));
+EXTERN(int, emitComputeStack2DArrayAddress, (DList instList, int varIndex, int subIndex1, int subIndex2));
 
 EXTERN(int, emitLoadVariable,(DList instList, int varIndex));
 EXTERN(int, emitLoadIntegerConstant,(DList instList, char* intConst));
