@@ -125,8 +125,8 @@ void emitReadVariable(DList instList, DList dataList, int addrIndex) {
     char *inst;
     char *fmtLabel = makeDataDeclaration(dataList, "\"%d\"");
 
-	if (isLocalScope) {
-			inst = ssave("\tpushq %rbx");
+	if (isLocalScope && localOffset % 16 == 0) {
+		inst = ssave("\tpushq %rbx");
 		dlinkAppend(instList,dlinkNodeAlloc(inst));
 	}
 
@@ -143,7 +143,7 @@ void emitReadVariable(DList instList, DList dataList, int addrIndex) {
 	inst = ssave("\tcall scanf@PLT");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
-	if (isLocalScope) {
+	if (isLocalScope && localOffset % 16 == 0){
 		inst = ssave("\tpopq %rbx");
 		dlinkAppend(instList,dlinkNodeAlloc(inst));	
 	}
@@ -168,7 +168,7 @@ void emitWriteExpression(DList instList, DList dataList, int writeType, int regI
 	char lenStr[10];
 
 
-	if (isLocalScope) {
+	if (isLocalScope && localOffset % 16 == 0){
 			inst = ssave("\tpushq %rbx");
 		dlinkAppend(instList,dlinkNodeAlloc(inst));
 	}
@@ -202,7 +202,7 @@ void emitWriteExpression(DList instList, DList dataList, int writeType, int regI
 	inst = ssave("\tcall printf@PLT");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
-	if (isLocalScope) {
+	if (isLocalScope && localOffset % 16 == 0){
 		inst = ssave("\tpopq %rbx");
 		dlinkAppend(instList,dlinkNodeAlloc(inst));	
 	}
@@ -223,7 +223,7 @@ void emitWriteString(DList instList,  DList dataList, int writeType, char *str, 
 	char *fmtStr;
 	char lenStr[10];
 
-	if (isLocalScope) {
+	if (isLocalScope && localOffset % 16 == 0){
 		inst = ssave("\tpopq %rbx");
 		dlinkAppend(instList,dlinkNodeAlloc(inst));
 	}
@@ -256,7 +256,7 @@ void emitWriteString(DList instList,  DList dataList, int writeType, char *str, 
 	inst = ssave("\tcall printf@PLT");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 
-	if (isLocalScope) {
+	if (isLocalScope && localOffset % 16 == 0){
 		inst = ssave("\tpushq %rbx");
 		dlinkAppend(instList,dlinkNodeAlloc(inst));
 	}
@@ -897,9 +897,9 @@ void addIdToLocalSymtab(DNode node, Generic gtypeid) {
 
   int typeid = (int)gtypeid;
   int typeSize = getTypeSize(typeid) * 2; // make it align to 8
-  localOffset -= typeSize;
   SymPutFieldByIndex(localSymtab, symIndex, SYMTAB_OFFSET_FIELD, (Generic)(localOffset));
   SymPutFieldByIndex(localSymtab, symIndex, SYMTAB_TYPE_INDEX_FIELD, (Generic)typeid);
+	localOffset -= typeSize;
 }
 /**
  * Print out the procedure exit instructios
