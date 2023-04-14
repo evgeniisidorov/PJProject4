@@ -124,6 +124,12 @@ void emitAssignment(DList instList, int lhsRegIndex, int rhsRegIndex) {
 void emitReadVariable(DList instList, DList dataList, int addrIndex) {
     char *inst;
     char *fmtLabel = makeDataDeclaration(dataList, "\"%d\"");
+
+	if (isLocalScope) {
+			inst = ssave("\tpushq %rbx");
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+	}
+
 	inst = nssave(3,"\tleaq ", fmtLabel, "(%rip), %rdi");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
 	free(fmtLabel);
@@ -136,6 +142,11 @@ void emitReadVariable(DList instList, DList dataList, int addrIndex) {
 
 	inst = ssave("\tcall scanf@PLT");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+	if (isLocalScope) {
+		inst = ssave("\tpopq %rbx");
+		dlinkAppend(instList,dlinkNodeAlloc(inst));	
+	}
 
 	freeIntegerRegister(addrIndex);
 }
@@ -155,6 +166,15 @@ void emitWriteExpression(DList instList, DList dataList, int writeType, int regI
 	char *fmtLabel;
 	char *fmtStr;
 	char lenStr[10];
+
+
+	if (isLocalScope) {
+			inst = ssave("\tpushq %rbx");
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+	}
+
+
+
 
 	if (length)		
  	   strcpy(lenStr, length);
@@ -181,6 +201,11 @@ void emitWriteExpression(DList instList, DList dataList, int writeType, int regI
 	  
 	inst = ssave("\tcall printf@PLT");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+	if (isLocalScope) {
+		inst = ssave("\tpopq %rbx");
+		dlinkAppend(instList,dlinkNodeAlloc(inst));	
+	}
 }
 
 /**
@@ -197,6 +222,11 @@ void emitWriteString(DList instList,  DList dataList, int writeType, char *str, 
 	char *fmtLabel;
 	char *fmtStr;
 	char lenStr[10];
+
+	if (isLocalScope) {
+		inst = ssave("\tpopq %rbx");
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+	}
 
 	if (length)		
  	   strcpy(lenStr, length);
@@ -225,6 +255,12 @@ void emitWriteString(DList instList,  DList dataList, int writeType, char *str, 
 
 	inst = ssave("\tcall printf@PLT");
 	dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+	if (isLocalScope) {
+		inst = ssave("\tpushq %rbx");
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+	}
+
 }
 
 /**
@@ -684,6 +720,86 @@ int emitComputeStackArrayAddress(DList instList, int varIndex, int subIndex) {
 	freeIntegerRegister(subIndex);
 
 	return regIndex;
+}
+
+int emitComputeStack2DArrayAddress(DList instList, int varIndex, int subIndex1, int subIndex2) {
+	int regIndex = allocateIntegerRegister();
+	int varTypeIndex = (int)SymGetFieldByIndex(localSymtab,varIndex,SYMTAB_TYPE_INDEX_FIELD);
+	
+	  if (isArrayType(varTypeIndex)) {
+		char* regName = get64bitIntegerRegisterName(regIndex);
+		int offset = (int)SymGetFieldByIndex(localSymtab,varIndex,SYMTAB_OFFSET_FIELD);
+		char offsetStr[10];
+		snprintf(offsetStr,9,"%d",offset);
+	
+		char *inst = nssave(4,"\tleaq ", offsetStr, "(%rbp), ", regName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+
+		/* compute offset based on subscript */		        
+		int tReg = allocateIntegerRegister();
+		char* sub1Reg32Name = getIntegerRegisterName(subIndex1);
+		char* sub1RegName = get64bitIntegerRegisterName(subIndex1);
+		char* tname = get64bitIntegerRegisterName(tReg);
+        
+		// copy row number to a 64-register
+		inst = nssave(4,"\tmovslq ", sub1Reg32Name, ", ", sub1RegName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+		// subtract base from row index
+		int base1 = get1stDimensionbase(varTypeIndex);
+		snprintf(offsetStr,9,"%d",base1);
+		inst = nssave(4, "\tsubq $", offsetStr, ", ", sub1RegName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+		// save column dim to a second register
+		int dim = get2ndDimensionSize(varTypeIndex);
+		snprintf(offsetStr,9,"%d",dim);
+		inst = nssave(4, "\tmovq $", offsetStr, ", ", tname);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+		// multiple a number of elements in a column by row index
+		inst = nssave(4, "\timulq ", tname, ", ", sub1RegName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+		freeIntegerRegister(tReg);
+
+		char* sub2Reg32Name = getIntegerRegisterName(subIndex2);
+		char* sub2RegName = get64bitIntegerRegisterName(subIndex2);
+		
+		// get a register that contains column number
+		inst = nssave(4,"\tmovslq ", sub2Reg32Name, ", ", sub2RegName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+		// add column index to element count
+		inst = nssave(4, "\taddq ", sub2RegName, ", ", sub1RegName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+		
+		// subtract base index
+		int base2 = get2ndDimensionbase(varTypeIndex);
+		snprintf(offsetStr,9,"%d",base2);
+		inst = nssave(4, "\tsubq $", offsetStr, ", ", sub1RegName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+		// to do: use element size below
+		inst = nssave(2,"\timulq $8, ", sub1RegName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));
+
+		/* compute element address */
+		inst = nssave(4,"\taddq ", sub1RegName, ", ", regName);
+		dlinkAppend(instList,dlinkNodeAlloc(inst));	 
+	  }
+	else {
+		char msg[80];
+
+		snprintf(msg,80,"Scalar variable %s used as an array",
+			 (char*)SymGetFieldByIndex(globalSymtab,varIndex,SYM_NAME_FIELD));
+		yyerror(msg);
+	}
+	
+	freeIntegerRegister(subIndex1);
+	freeIntegerRegister(subIndex2);
+	return regIndex;
+
 }
 
 /**

@@ -500,8 +500,13 @@ Variable        : T_IDENTIFIER
                	}
 		| T_IDENTIFIER T_LBRACKET Expr T_COMMA Expr T_RBRACKET   
                	{
-			int symIndex = SymQueryIndex(globalSymtab,$1);
-               		$$ = emitCompute2DArrayAddress(instList, symIndex,$3, $5);
+					if (isLocalScope && SymQueryIndex(localSymtab, $1) != SYM_INVALID_INDEX) {
+						int symIndex = SymQueryIndex(localSymtab,$1);
+						$$ = emitComputeStack2DArrayAddress(instList, symIndex,$3, $5);
+					} else {
+						int symIndex = SymQueryIndex(globalSymtab,$1);
+						$$ = emitCompute2DArrayAddress(instList, symIndex,$3, $5);
+					}
                	}
                 ;			       		       
 
